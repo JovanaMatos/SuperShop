@@ -1,18 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SuperShop.Data;
 using SuperShop.Data.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SuperShop.Controllers
 {
     public class ProductsController : Controller
     {
-        private readonly IRepository _repository;
+        private readonly IProductRepository _repository;
 
-        public ProductsController(IRepository repository)
+        public ProductsController(IProductRepository repository)
         {
             _repository = repository;
         }
@@ -20,18 +17,18 @@ namespace SuperShop.Controllers
         // GET: Products
         public IActionResult Index()
         {
-            return View(_repository.GetProducts());
+            return View(_repository.GetAll());
         }
 
         // GET: Products/Details/5
-        public IActionResult Details(int? id)
+        public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var product = _repository.GetProduct(id.Value);
+            var product = await _repository.GetByIdAsync(id.Value);
 
             if (product == null)
             {
@@ -55,9 +52,7 @@ namespace SuperShop.Controllers
         {
             if (ModelState.IsValid)
             {
-                _repository.AddProduct(product);
-
-                await _repository.SaveAllAsync();
+                await _repository.CreateAsync(product);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -66,14 +61,14 @@ namespace SuperShop.Controllers
         }
 
         // GET: Products/Edit/5
-        public IActionResult Edit(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var product = _repository.GetProduct(id.Value);
+            var product = await _repository.GetByIdAsync(id.Value);
 
             if (product == null)
             {
@@ -97,9 +92,7 @@ namespace SuperShop.Controllers
 
             if (ModelState.IsValid)
             {
-                _repository.UpdateProduct(product);
-
-                await _repository.SaveAllAsync();
+                _repository.UpdateAsync(product);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -108,14 +101,14 @@ namespace SuperShop.Controllers
         }
 
         // GET: Products/Delete/5
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var product = _repository.GetProduct(id.Value);
+            var product = await _repository.GetByIdAsync(id.Value);
 
             if (product == null)
             {
@@ -130,16 +123,14 @@ namespace SuperShop.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = _repository.GetProduct(id);
+            var product = await _repository.GetByIdAsync(id);
 
             if (product == null)
             {
                 return NotFound();
             }
 
-            _repository.RemoveProduct(product);
-
-            await _repository.SaveAllAsync();
+            _repository.DeleteAsync(product);
 
             return RedirectToAction(nameof(Index));
         }
