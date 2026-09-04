@@ -13,34 +13,65 @@ namespace SuperShop.Data
         private readonly DataContext _context;
 
         private Random _random;
+        private readonly UserManager<User> _userManager;
 
-        public SeedDb(DataContext context)
+
+        public SeedDb(DataContext context, UserManager<User> userManager)
         {
             _context = context;
             _random = new Random();
+            _userManager = userManager;
         }
 
         public async Task SeedAsync()
         {
             await _context.Database.EnsureCreatedAsync();
 
-            if(!_context.Products.Any())
+            User user = await _userManager.FindByEmailAsync("jovanamatos22@gmail.com");
+
+            if (user == null)
             {
-                AddProduct("Iphone 13");
-                AddProduct("Iphone 14");
-                AddProduct("Iphone 15");
-                AddProduct("Samsung Galaxy S22");
-                AddProduct("Samsung Galaxy S23");
-                AddProduct("Samsung Galaxy S24");
-                AddProduct("Xiaomi Redmi Note 12");
-                AddProduct("Xiaomi Redmi Note 13");
-                AddProduct("Xiaomi Redmi Note 14");
+                user = new User
+                {
+                    FirstName = "Jovana",
+                    LastName = "Matos",
+                    UserName = "jovanamatos22@gmail.com",
+                    Email = "jovanamatos22@gmail.com"
+
+                };
+
+                IdentityResult result = await _userManager.CreateAsync(
+                    user,
+                    "123456"
+                );
+                if (!result.Succeeded)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        throw new InvalidOperationException(
+                            $"{error.Code}: {error.Description}"
+                        );
+                    }
+                }
+            }
+
+                if (!_context.Products.Any())
+            {
+                AddProduct("Iphone 13", user);
+                AddProduct("Iphone 14", user);
+                AddProduct("Iphone 15", user);
+                AddProduct("Samsung Galaxy S22", user);
+                AddProduct("Samsung Galaxy S23", user);
+                AddProduct("Samsung Galaxy S24", user);
+                AddProduct("Xiaomi Redmi Note 12", user);
+                AddProduct("Xiaomi Redmi Note 13", user);
+                AddProduct("Xiaomi Redmi Note 14", user);
                 await _context.SaveChangesAsync();
             }
 
         }
 
-        private void AddProduct(string name)
+        private void AddProduct(string name, User user)
         {
             _context.Products.Add(new Product
             {
@@ -48,6 +79,7 @@ namespace SuperShop.Data
                 Price = _random.Next(1000),
                 IsAvailable = true,
                 Stock = _random.Next(100),
+                User = user
             });
         }
     }

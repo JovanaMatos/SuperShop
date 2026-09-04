@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SuperShop.Data;
 using SuperShop.Data.Entities;
+using SuperShop.Helpers;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SuperShop.Controllers
@@ -8,16 +10,20 @@ namespace SuperShop.Controllers
     public class ProductsController : Controller
     {
         private readonly IProductRepository _repository;
+        private readonly IUserHelper _userHelper;
 
-        public ProductsController(IProductRepository repository)
+        public ProductsController(
+            IProductRepository repository,
+            IUserHelper userHelper)
         {
             _repository = repository;
+            _userHelper = userHelper;
         }
 
         // GET: Products
         public IActionResult Index()
         {
-            return View(_repository.GetAll());
+            return View(_repository.GetAll().OrderBy(p => p.Name));
         }
 
         // GET: Products/Details/5
@@ -52,6 +58,10 @@ namespace SuperShop.Controllers
         {
             if (ModelState.IsValid)
             {
+                product.User = await _userHelper.GetUserByEmailAsync(
+                    "jovanamatos22@gmail.com"
+                );
+
                 await _repository.CreateAsync(product);
 
                 return RedirectToAction(nameof(Index));
@@ -85,13 +95,13 @@ namespace SuperShop.Controllers
             int id,
             [Bind("Id,Name,Price,ImageUrl,LastPurchase,LastSale,IsAvailable,Stock")] Product product)
         {
-            if (id != product.Id)
-            {
-                return NotFound();
-            }
-
+   
             if (ModelState.IsValid)
             {
+                product.User = await _userHelper.GetUserByEmailAsync(
+                    "jovanamatos22@gmail.com"
+                );
+
                 _repository.UpdateAsync(product);
 
                 return RedirectToAction(nameof(Index));
