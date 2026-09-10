@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SuperShop.Data;
 using SuperShop.Data.Entities;
@@ -53,12 +54,14 @@ namespace SuperShop.Controllers
         }
 
         // GET: Products/Create
+        [Authorize]
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: Products/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductViewModel model)
@@ -87,6 +90,7 @@ namespace SuperShop.Controllers
         }
 
         // GET: Products/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -106,6 +110,7 @@ namespace SuperShop.Controllers
         }
 
         // POST: Products/Edit/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ProductViewModel model)
