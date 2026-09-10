@@ -12,9 +12,9 @@ namespace SuperShop.Data
 
         Task CreateAsync(T entity);
 
-        void UpdateAsync(T entity);
+        Task UpdateAsync(T entity);
 
-        void DeleteAsync(T entity);
+        Task DeleteAsync(T entity);
 
         bool ExistAsync(int id);
     }

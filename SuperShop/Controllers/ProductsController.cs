@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SuperShop.Data;
 using SuperShop.Data.Entities;
 using SuperShop.Helpers;
+using SuperShop.Models;
+using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -53,11 +56,32 @@ namespace SuperShop.Controllers
         // POST: Products/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-            [Bind("Id,Name,Price,ImageUrl,LastPurchase,LastSale,IsAvailable,Stock")] Product product)
+        public async Task<IActionResult> Create(ProductViewModel model)
         {
             if (ModelState.IsValid)
             {
+                var path = string.Empty;
+
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    var guid = Guid.NewGuid().ToString();
+                    var file = $"{guid}.jpg";
+
+                    path = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot\\images\\products",
+                        file);
+
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await model.ImageFile.CopyToAsync(stream);
+                    }
+
+                    path = $"~/images/products/{file}";
+                }
+
+                var product = this.ToProduct(model, path);
+
                 product.User = await _userHelper.GetUserByEmailAsync(
                     "jovanamatos22@gmail.com"
                 );
@@ -67,7 +91,39 @@ namespace SuperShop.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(product);
+            return View(model);
+        }
+
+        private Product ToProduct(ProductViewModel model, string path)
+        {
+            return new Product
+            {
+                Id = model.Id,
+                ImageUrl = path,
+                IsAvailable = model.IsAvailable,
+                LastPurchase = model.LastPurchase,
+                LastSale = model.LastSale,
+                Name = model.Name,
+                Price = model.Price,
+                Stock = model.Stock,
+                User = model.User
+            };
+        }
+
+        private ProductViewModel ToProductViewModel(Product product)
+        {
+            return new ProductViewModel
+            {
+                Id = product.Id,
+                ImageUrl = product.ImageUrl,
+                IsAvailable = product.IsAvailable,
+                LastPurchase = product.LastPurchase,
+                LastSale = product.LastSale,
+                Name = product.Name,
+                Price = product.Price,
+                Stock = product.Stock,
+                User = product.User
+            };
         }
 
         // GET: Products/Edit/5
@@ -85,29 +141,56 @@ namespace SuperShop.Controllers
                 return NotFound();
             }
 
-            return View(product);
+            var model = this.ToProductViewModel(product);
+            return View(model);
         }
 
         // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            int id,
-            [Bind("Id,Name,Price,ImageUrl,LastPurchase,LastSale,IsAvailable,Stock")] Product product)
+        public async Task<IActionResult> Edit(ProductViewModel model)
         {
-   
             if (ModelState.IsValid)
             {
-                product.User = await _userHelper.GetUserByEmailAsync(
-                    "jovanamatos22@gmail.com"
-                );
+                try
+                {
+                    var path = model.ImageUrl;
 
-                _repository.UpdateAsync(product);
+                    if (model.ImageFile != null && model.ImageFile.Length > 0)
+                    {
+                        var guid = Guid.NewGuid().ToString();
+                        var file = $"{guid}.jpg";
 
-                return RedirectToAction(nameof(Index));
+                        path = Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            "wwwroot\\images\\products",
+                            file);
+
+                        using (var stream = new FileStream(path, FileMode.Create))
+                        {
+                            await model.ImageFile.CopyToAsync(stream);
+                        }
+
+                        path = $"~/images/products/{file}";
+                    }
+
+                    var product = this.ToProduct(model, path);
+
+                    product.User = await _userHelper.GetUserByEmailAsync(
+                        "jovanamatos22@gmail.com"
+                    );
+
+                    await _repository.UpdateAsync(product);
+
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception)
+                {
+                    return View(model);
+                }
             }
 
-            return View(product);
+            return View(model);
         }
 
         // GET: Products/Delete/5
@@ -140,7 +223,7 @@ namespace SuperShop.Controllers
                 return NotFound();
             }
 
-            _repository.DeleteAsync(product);
+            await _repository.DeleteAsync(product);
 
             return RedirectToAction(nameof(Index));
         }
