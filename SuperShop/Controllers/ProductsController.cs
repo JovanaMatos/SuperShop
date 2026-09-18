@@ -78,7 +78,7 @@ namespace SuperShop.Controllers
                 var product = _converterHelper.ToProduct(model, path, true);
 
                 product.User = await _userHelper.GetUserByEmailAsync(
-                    "jovanamatos22@gmail.com"
+                    this.User.Identity.Name
                 );
 
                 await _repository.CreateAsync(product);
@@ -129,7 +129,7 @@ namespace SuperShop.Controllers
                     var product = _converterHelper.ToProduct(model, path, false);
 
                     product.User = await _userHelper.GetUserByEmailAsync(
-                        "jovanamatos22@gmail.com"
+                        this.User.Identity.Name
                     );
 
                     await _repository.UpdateAsync(product);
@@ -146,6 +146,7 @@ namespace SuperShop.Controllers
         }
 
         // GET: Products/Delete/5
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -164,6 +165,7 @@ namespace SuperShop.Controllers
         }
 
         // POST: Products/Delete/5
+        [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
