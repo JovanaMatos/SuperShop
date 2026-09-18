@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SuperShop.Data.Entities;
+using SuperShop.Helpers;
 
 namespace SuperShop.Data
 {
@@ -13,21 +14,24 @@ namespace SuperShop.Data
         private readonly DataContext _context;
 
         private Random _random;
-        private readonly UserManager<User> _userManager;
+        private readonly IUserHelper _userHelper;
 
 
-        public SeedDb(DataContext context, UserManager<User> userManager)
+        public SeedDb(DataContext context, IUserHelper userHelper)
         {
             _context = context;
             _random = new Random();
-            _userManager = userManager;
+            _userHelper = userHelper;
         }
 
         public async Task SeedAsync()
         {
             await _context.Database.EnsureCreatedAsync();
 
-            User user = await _userManager.FindByEmailAsync("jovanamatos22@gmail.com");
+            await _userHelper.CheckRoleAsync("Admin");
+            await _userHelper.CheckRoleAsync("Customer");
+
+            var user = await _userHelper.GetUserByEmailAsync("jovanamatos22@gmail.com");
 
             if (user == null)
             {
@@ -40,7 +44,7 @@ namespace SuperShop.Data
 
                 };
 
-                IdentityResult result = await _userManager.CreateAsync(
+                var result = await _userHelper.AddUserAsync(
                     user,
                     "123456"
                 );
@@ -53,6 +57,15 @@ namespace SuperShop.Data
                         );
                     }
                 }
+
+                await _userHelper.AddUserToRoleAsync(user, "Admin");
+            }
+
+            var isInRole = await _userHelper.IsUserInRoleAsync(user, "Admin");
+
+            if (!isInRole)
+            {
+                await _userHelper.AddUserToRoleAsync(user, "Admin");
             }
 
                 if (!_context.Products.Any())
