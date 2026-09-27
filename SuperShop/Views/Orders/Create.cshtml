@@ -8,7 +8,7 @@
 
 <p>
     <a asp-action="AddProduct" class="btn btn-primary"><i class="fa fa-plus"></i> Add Product</a>
-    <a asp-action="ConfirmOrder" class="btn btn-success"><i class="fa fa-check"></i> Confirm Order</a>
+    <a asp-action="ConfirmOrder" id="btnConfirmOrder" class="btn btn-success"><i class="fa fa-check"></i> Confirm Order</a>
 </p>
 
 @if (Model != null && Model.Any())
@@ -47,10 +47,10 @@
                     <td>
                         @Html.DisplayFor(modelItem => item.Value)
                     </td>
-                    <td>
+                    <td id="@item.Id">
                         <a asp-action="Increase" asp-route-id="@item.Id" class="btn btn-info btn-sm"><i class="fa fa-plus"></i></a>
                         <a asp-action="Decrease" asp-route-id="@item.Id" class="btn btn-warning btn-sm"><i class="fa fa-minus"></i></a>
-                        <a asp-action="DeleteItem" asp-route-id="@item.Id" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+                        <a asp-action="DeleteItem" asp-route-id="@item.Id" id="btnDeleteItem" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></a>
                     </td>
                 </tr>
             }
@@ -65,3 +65,80 @@ else
 <div>
     <a asp-action="Index" class="btn btn-success"><i class="fa fa-chevron-left"></i> Back to List</a>
 </div>
+
+<div class="modal fade" id="confirmDialog" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Order</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Do you want to confirm the order?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btnYesConfirm">Yes</button>
+                <button type="button" class="btn btn-secondary" id="btnNoConfirm">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteDialog" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Do you want to delete the product from the order?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btnYesDelete">Yes</button>
+                <button type="button" class="btn btn-secondary" id="btnNoDelete">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var id = 0;
+
+            $("#btnConfirmOrder").click(function () {
+                $("#confirmDialog").modal("show");
+                return false;
+            });
+
+            $("#btnNoConfirm").click(function () {
+                $("#confirmDialog").modal("hide");
+                return false;
+            });
+
+            $("#btnYesConfirm").click(function () {
+                window.location.href = "/Orders/ConfirmOrder";
+            });
+
+            $("[id*=btnDeleteItem]").click(function () {
+                id = $(this).parent().attr("id");
+                $("#deleteDialog").modal("show");
+                return false;
+            });
+
+            $("#btnNoDelete").click(function () {
+                $("#deleteDialog").modal("hide");
+                return false;
+            });
+
+            $("#btnYesDelete").click(function () {
+                window.location.href = "/Orders/DeleteItem/" + id;
+            });
+        });
+    </script>
+}
