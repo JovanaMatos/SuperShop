@@ -23,6 +23,13 @@ namespace SuperShop.Data.Entities
 
         public IEnumerable<OrderDetail> Items { get; set; }
 
+        [Display(Name = "Order date")]
+        [DisplayFormat(DataFormatString = "{0:MM/dd/yyyy HH:mm}", ApplyFormatInEditMode = false)]
+        public DateTime? OrderDateLocal => OrderDate == null ? null : OrderDate.ToLocalTime();
+
+        [DisplayFormat(DataFormatString = "{0:N0}")]
+        public int Lines => Items == null ? 0 : Items.Count();
+
         [DisplayFormat(DataFormatString = "{0:N2}")]
         public double Quantity => Items == null ? 0 : Items.Sum(i => i.Quantity);
 
