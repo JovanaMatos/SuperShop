@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SuperShop.Data;
 using SuperShop.Data.Entities;
 using SuperShop.Helpers;
@@ -54,14 +55,14 @@ namespace SuperShop.Controllers
         }
 
         // GET: Products/Create
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: Products/Create
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductViewModel model)
@@ -177,9 +178,22 @@ namespace SuperShop.Controllers
                 return new NotFoundViewResult("ProductNotFound");
             }
 
-            await _repository.DeleteAsync(product);
+            try
+            {
+                await _repository.DeleteAsync(product);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("DELETE"))
+                {
+                    ViewBag.ErrorTitle = $"{product.Name} provavelmente está a ser usado.";
+                    ViewBag.ErrorMessage = $"{product.Name} não pode ser apagado porque existem encomendas que o utilizam.<br/>" +
+                        $"Experimente primeiro apagar todas as encomendas que o estão a usar e torne novamente a apagá-lo.";
+                }
 
-            return RedirectToAction(nameof(Index));
+                return View("Error");
+            }
         }
 
         public IActionResult ProductNotFound()
