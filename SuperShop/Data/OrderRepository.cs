@@ -43,5 +43,21 @@ namespace SuperShop.Data
                 .Where(o => o.User == user)
                 .OrderByDescending(o => o.OrderDate);
         }
+
+        public IQueryable<OrderDetailTemp> GetDetailTempsAsync(string userName)
+        {
+            var user = _userHelper.GetUserByEmailAsync(userName).Result;
+
+            if (user == null)
+            {
+                return null;
+            }
+
+            return _context.OrderDetailsTemp
+                .Include(o => o.Product)
+                .Where(o => o.User == user)
+                .OrderBy(o => o.Product.Name);
+        }
+
     }
 }
