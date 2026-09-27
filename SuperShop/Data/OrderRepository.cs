@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SuperShop.Data.Entities;
 using SuperShop.Helpers;
+using SuperShop.Models;
 
 namespace SuperShop.Data
 {
@@ -59,5 +60,59 @@ namespace SuperShop.Data
                 .OrderBy(o => o.Product.Name);
         }
 
+        public async Task AddItemToOrderAsync(AddItemViewModel model, string userName)
+        {
+            var user = await _userHelper.GetUserByEmailAsync(userName);
+            if (user == null)
+            {
+                return;
+            }
+
+            var product = await _context.Products.FindAsync(model.ProductId);
+            if (product == null)
+            {
+                return;
+            }
+
+            var orderDetailTemp = await _context.OrderDetailsTemp
+                .Where(odt => odt.User == user && odt.Product == product)
+                .FirstOrDefaultAsync();
+
+            if (orderDetailTemp == null)
+            {
+                orderDetailTemp = new OrderDetailTemp
+                {
+                    Price = product.Price,
+                    Product = product,
+                    Quantity = model.Quantity,
+                    User = user,
+                };
+
+                _context.OrderDetailsTemp.Add(orderDetailTemp);
+            }
+            else
+            {
+                orderDetailTemp.Quantity += model.Quantity;
+                _context.OrderDetailsTemp.Update(orderDetailTemp);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ModifyOrderDetailTempQuantityAsync(int id, double quantity)
+        {
+            var orderDetailTemp = await _context.OrderDetailsTemp.FindAsync(id);
+            if (orderDetailTemp == null)
+            {
+                return;
+            }
+
+            orderDetailTemp.Quantity += quantity;
+            if (orderDetailTemp.Quantity > 0)
+            {
+                _context.OrderDetailsTemp.Update(orderDetailTemp);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }
